@@ -112,14 +112,13 @@ export default function Dice456() {
       };
     }
     
-    // If no pattern is found, return the highest dice as the score
-    const highestDie = Math.max(...sortedDice);
+    // If no pattern is found, should roll again
     return {
       name: "No pairs",
-      value: highestDie,
+      value: 0,
       isAutoWin: false,
       isAutoLose: false,
-      description: `No pairs, highest die is ${highestDie} (${highestDie} points)`
+      description: "No pairs - must roll again"
     };
   };
   
@@ -182,6 +181,13 @@ export default function Dice456() {
       else if (combination.isAutoWin) {
         endGame("win");
       }
+      // If there's no pair (need to re-roll)
+      else if (combination.name === "No pairs") {
+        showNotification("No pairs - rolling again!");
+        setTimeout(() => {
+          rollPlayerDice(); // Re-roll player's dice
+        }, 1000);
+      }
       // Otherwise, roll the computer's dice
       else {
         setTimeout(() => {
@@ -226,6 +232,12 @@ export default function Dice456() {
       } else if (combination.isAutoLose) {
         // Computer has 123
         endGame("win");
+      } else if (combination.name === "No pairs") {
+        // Computer has no pairs - re-roll
+        showNotification("Opponent has no pairs - they roll again!");
+        setTimeout(() => {
+          rollComputerDice(); // Re-roll computer's dice
+        }, 1000);
       } else if (playerCombination && combination.value > playerCombination.value) {
         // Computer has higher value
         endGame("loss");
@@ -465,6 +477,7 @@ export default function Dice456() {
           <li><span className="text-[#F8BF0C] font-semibold">123 is the lowest:</span> Rolling 1-2-3 in any order is an automatic loss</li>
           <li><span className="text-[#F8BF0C] font-semibold">Triples:</span> Three of the same number (666 is best, then 555, 444, 333, 222, 111)</li>
           <li><span className="text-[#F8BF0C] font-semibold">Doubles:</span> If you roll two of the same number, the third number is your score</li>
+          <li><span className="text-[#F8BF0C] font-semibold">No Pairs:</span> If you roll three different numbers (not 123 or 456), you must roll again</li>
           <li><span className="text-[#F8BF0C] font-semibold">Highest wins:</span> The player with the higher-ranked combination wins</li>
           <li><span className="text-[#F8BF0C] font-semibold">Winnings:</span> If you win, you get double your bet; if you tie, your bet is returned</li>
         </ul>
