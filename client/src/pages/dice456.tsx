@@ -74,8 +74,13 @@ export default function Dice456() {
     const diceString = sortedDice.join("");
     
     // Check for 456 (automatic win)
-    if (diceString === "456" || diceString === "465" || diceString === "546" || 
-        diceString === "564" || diceString === "645" || diceString === "654") {
+    // We need to check the actual values in the array, not just the sorted string
+    // The sorted string approach won't work since we're sorting the values
+    const has4 = dice.includes(4);
+    const has5 = dice.includes(5);
+    const has6 = dice.includes(6);
+    
+    if (has4 && has5 && has6) {
       return {
         name: "456",
         value: 1000,
@@ -86,8 +91,12 @@ export default function Dice456() {
     }
     
     // Check for 123 (automatic loss)
-    if (diceString === "123" || diceString === "132" || diceString === "213" || 
-        diceString === "231" || diceString === "312" || diceString === "321") {
+    // We need to check the actual values in the array, not just the sorted string
+    const has1 = dice.includes(1);
+    const has2 = dice.includes(2);
+    const has3 = dice.includes(3);
+    
+    if (has1 && has2 && has3) {
       return {
         name: "123",
         value: 0,
