@@ -1,54 +1,31 @@
 import { usePlayer } from "@/contexts/PlayerContext";
-import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Link, useLocation } from "wouter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export default function Header() {
-  const { player, setPlayer } = usePlayer();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
+  const { player, logout, isLoading } = usePlayer();
+  const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setIsLoading(true);
-        const response = await apiRequest("GET", "/api/auth/me");
-        const data = await response.json();
-        
-        if (data) {
-          setPlayer({
-            id: data.id,
-            username: data.username,
-            balance: data.balance,
-            isLoggedIn: true
-          });
-        } else {
-          setPlayer({
-            id: 0,
-            username: "Guest",
-            balance: 5000,
-            isLoggedIn: false
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load user data",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const handleLogout = async () => {
+    await logout();
+    setLocation('/auth');
+  };
 
   return (
     <header className="bg-[#331D5C] shadow-md">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-[#F8BF0C] font-montserrat font-bold text-2xl sm:text-3xl">Royal Flush Casino</h1>
+          <Link href="/">
+            <div className="text-[#F8BF0C] font-montserrat font-bold text-2xl sm:text-3xl hover:text-white transition duration-200 cursor-pointer">
+              Royal Flush Casino
+            </div>
+          </Link>
         </div>
         
         <div className="flex items-center space-x-4">
@@ -59,12 +36,30 @@ export default function Header() {
             </span>
           </div>
           
-          <div className="flex items-center">
-            <span className="hidden sm:inline-block font-medium mr-2">{player.username}</span>
-            <div className="w-10 h-10 rounded-full bg-[#F8BF0C] flex items-center justify-center text-[#331D5C]">
-              <i className="fas fa-user"></i>
-            </div>
-          </div>
+          {player.isLoggedIn ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center space-x-2 p-2 hover:bg-[#232131] rounded-full">
+                  <span className="hidden sm:inline-block font-medium">{player.username}</span>
+                  <div className="w-10 h-10 rounded-full bg-[#F8BF0C] flex items-center justify-center text-[#331D5C]">
+                    <i className="fas fa-user"></i>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleLogout}>
+                  <i className="fas fa-sign-out-alt mr-2"></i> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button 
+              onClick={() => setLocation('/auth')}
+              className="bg-gradient-to-r from-[#F8BF0C] to-yellow-600 text-[#232131] font-bold hover:from-yellow-500 hover:to-yellow-700"
+            >
+              Login / Register
+            </Button>
+          )}
         </div>
       </div>
     </header>
