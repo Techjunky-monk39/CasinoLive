@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useNotification } from "@/components/ui/notification-banner";
 import { apiRequest } from "@/lib/queryClient";
 import { GameType } from "@shared/schema";
+import { ChatBox } from "@/components/casino/ChatBox";
 import { 
   Tabs, 
   TabsContent, 
@@ -352,20 +353,63 @@ export default function Dice456() {
   
   return (
     <main className="container mx-auto px-4 py-6 text-white">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-montserrat font-bold text-[#F8BF0C]">456 Dice Challenge</h2>
-        {gameState === "result" && result && (
-          <div className={`rounded-lg px-6 py-2 ${
-            result === "win" ? "bg-[#1A7A4C]" : 
-            result === "loss" ? "bg-[#A12C2C]" : 
-            "bg-[#2E86DE]"
-          }`}>
-            <span className="text-lg font-bold text-white">
-              {result === "win" ? "YOU WIN!" : result === "loss" ? "YOU LOSE!" : "PUSH!"}
-            </span>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-3xl font-montserrat font-bold text-[#F8BF0C] bg-gradient-to-r from-purple-700 to-pink-500 bg-clip-text text-transparent">456 Dice Challenge</h2>
+        <div className="flex items-center space-x-3">
+          <div className="bg-black bg-opacity-50 rounded-lg p-2 flex items-center">
+            <span className="text-gray-300 mr-2">Balance:</span>
+            <span className="text-[#F8BF0C] text-xl font-bold">{player.balance}</span>
+            <span className="text-gray-300 ml-1">credits</span>
           </div>
-        )}
+          {gameState === "result" && result && (
+            <div className={`rounded-lg px-6 py-2 ${
+              result === "win" ? "bg-[#1A7A4C]" : 
+              result === "loss" ? "bg-[#A12C2C]" : 
+              "bg-[#2E86DE]"
+            }`}>
+              <span className="text-lg font-bold text-white">
+                {result === "win" ? "YOU WIN!" : result === "loss" ? "YOU LOSE!" : "PUSH!"}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* Top Controls - Roll Button Area */}
+      {gameState === "betting" && (
+        <div className="bg-gradient-to-r from-purple-900 to-pink-900 rounded-xl p-4 mb-4 shadow-lg border border-[#F8BF0C]">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <span className="text-xl text-[#F8BF0C] font-bold">BET:</span>
+              <div className="flex items-center bg-black bg-opacity-70 rounded-lg overflow-hidden">
+                <button 
+                  onClick={decreaseBet}
+                  className="bg-[#331D5C] hover:bg-purple-800 text-white px-4 py-3 focus:outline-none disabled:opacity-50 font-bold text-lg"
+                >
+                  -
+                </button>
+                <span className="px-6 py-3 font-sans text-[#F8BF0C] text-xl font-bold">{currentBet}</span>
+                <button 
+                  onClick={increaseBet}
+                  className="bg-[#331D5C] hover:bg-purple-800 text-white px-4 py-3 focus:outline-none disabled:opacity-50 font-bold text-lg"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            
+            <button 
+              onClick={startGame}
+              disabled={player.balance < currentBet}
+              className={`bg-gradient-to-r from-[#A12C2C] to-[#F8BF0C] hover:from-red-700 hover:to-yellow-500 text-white font-sans py-4 px-12 rounded-lg text-xl shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none ${
+                player.balance < currentBet ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <span className="font-bold tracking-wider">ROLL THE DICE</span>
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Game Settings */}
       {gameState === "betting" && (
@@ -546,40 +590,51 @@ export default function Dice456() {
           </div>
         )}
         
-        {/* Controls */}
-        {gameState === "betting" && (
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <div className="flex items-center">
-              <span className="text-gray-300 mr-3">Bet:</span>
-              <div className="flex items-center bg-black bg-opacity-50 rounded-lg overflow-hidden">
-                <button 
-                  onClick={decreaseBet}
-                  className="bg-[#331D5C] hover:bg-purple-800 text-white px-3 py-2 focus:outline-none disabled:opacity-50"
-                >
-                  <i className="fas fa-minus"></i>
-                </button>
-                <span className="px-4 py-2 font-sans text-[#F8BF0C]">{currentBet}</span>
-                <button 
-                  onClick={increaseBet}
-                  className="bg-[#331D5C] hover:bg-purple-800 text-white px-3 py-2 focus:outline-none disabled:opacity-50"
-                >
-                  <i className="fas fa-plus"></i>
-                </button>
-              </div>
+        {/* Game Stats */}
+        {gameState === "rolling" && (
+          <div className="text-center mb-6 p-4 rounded-lg bg-black bg-opacity-30">
+            <div className="text-md text-gray-300">
+              <span className="text-[#F8BF0C] font-bold mr-2">Current Bet:</span>
+              <span className="text-white">{currentBet} credits</span>
+              
+              {difficultyMode === "three-rolls" && (
+                <span className="ml-6 text-[#F8BF0C] font-bold mr-2">
+                  Re-rolls: <span className="text-white">{rollCount}/3</span>
+                </span>
+              )}
             </div>
-            
-            <button 
-              onClick={startGame}
-              disabled={player.balance < currentBet}
-              className={`bg-gradient-to-r from-[#A12C2C] to-[#F8BF0C] hover:from-red-700 hover:to-yellow-500 text-white font-sans py-3 px-8 rounded-full text-lg shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none ${
-                player.balance < currentBet ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              ROLL THE DICE
-            </button>
           </div>
         )}
       </div>
+      
+      {/* Chat Box - Only visible in multiplayer mode */}
+      {gameMode === "multiplayer" && (
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-[#232131] bg-opacity-70 rounded-xl p-4">
+            <h3 className="text-xl font-montserrat font-semibold mb-3 text-[#F8BF0C]">Game Information</h3>
+            <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
+              <p className="text-gray-300">
+                You are playing in multiplayer mode. Share this game ID with your friends to play together:
+              </p>
+              <div className="flex items-center space-x-2 mt-2">
+                <div className="bg-[#331D5C] rounded-lg px-4 py-2 text-[#F8BF0C] font-mono font-bold">
+                  GAME-{player.id}-{Math.floor(Math.random() * 9000 + 1000)}
+                </div>
+                <button className="bg-[#331D5C] hover:bg-purple-800 text-white px-3 py-2 rounded-lg">
+                  Copy
+                </button>
+              </div>
+            </div>
+            <p className="text-gray-300 text-sm">
+              In multiplayer mode, players take turns rolling the dice. The game automatically handles turn transitions and score tracking.
+              You can communicate with other players using the chat box.
+            </p>
+          </div>
+          <div className="lg:col-span-1 h-[400px]">
+            <ChatBox gameId={`dice456-${player.id}`} />
+          </div>
+        </div>
+      )}
       
       {/* Rules */}
       <div className="mt-6 bg-[#232131] bg-opacity-70 rounded-xl p-4">
