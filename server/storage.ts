@@ -69,14 +69,25 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Create a default user for demo purposes if it doesn't exist
-const initializeDefaultUser = async (storage: DatabaseStorage) => {
+// Create default users for demo purposes if they don't exist
+const initializeDefaultUsers = async (storage: DatabaseStorage) => {
+  // Create regular player account
   const defaultUser = await storage.getUserByUsername("player123");
   if (!defaultUser) {
     await storage.createUser({
       username: "player123",
-      password: "$admin", // Updated to user's suggested password
+      password: "password123", // Using a standard password
       balance: 5000
+    });
+  }
+  
+  // Create admin account
+  const adminUser = await storage.getUserByUsername("admin");
+  if (!adminUser) {
+    await storage.createUser({
+      username: "admin",
+      password: "admin123", // Admin password
+      balance: 10000
     });
   }
 };
@@ -84,5 +95,5 @@ const initializeDefaultUser = async (storage: DatabaseStorage) => {
 // Use database storage
 export const storage = new DatabaseStorage();
 
-// Initialize default user
-initializeDefaultUser(storage).catch(console.error);
+// Initialize default users
+initializeDefaultUsers(storage).catch(console.error);
