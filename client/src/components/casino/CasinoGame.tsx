@@ -29,9 +29,9 @@ export function CasinoGame({ game }: CasinoGameProps) {
             <span className="text-sm text-gray-300">{game.players} playing</span>
           </div>
           <Link href={`/${game.id}`}>
-            <a className="bg-[#2E86DE] hover:bg-blue-600 text-white font-sans py-2 px-4 rounded-lg transition-colors duration-300">
+            <button className="bg-[#2E86DE] hover:bg-blue-600 text-white font-sans py-2 px-4 rounded-lg transition-colors duration-300">
               Play Now
-            </a>
+            </button>
           </Link>
         </div>
       </div>
