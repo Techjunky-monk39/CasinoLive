@@ -54,6 +54,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = await storage.getUserByUsername(username);
       
+      // For the simple plain text password comparison for now
+      // In a real application, we would use bcrypt.compare or similar
       if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

@@ -10,7 +10,7 @@ export default function Dice10000() {
   
   const [currentBet, setCurrentBet] = React.useState(100);
   const [gameState, setGameState] = React.useState<"betting" | "rolling" | "finished">("betting");
-  const [dice, setDice] = React.useState<number[]>([]);
+  const [dice, setDice] = React.useState<number[]>([0, 0, 0, 0, 0, 0]);
   const [heldDice, setHeldDice] = React.useState<number[]>([]);
   const [score, setScore] = React.useState<number>(0);
   const [totalScore, setTotalScore] = React.useState<number>(0);
@@ -101,7 +101,7 @@ export default function Dice10000() {
     }
     
     setGameState("rolling");
-    setDice([]);
+    setDice([0, 0, 0, 0, 0, 0]);
     setHeldDice([]);
     setScore(0);
     setTotalScore(0);
@@ -123,9 +123,11 @@ export default function Dice10000() {
       setHeldDice([...heldDice, ...selectedDice]);
     }
     
-    // If all dice are held, get a new set of 6 dice
+    // If all dice are held or first roll, get a new set of 6 dice
     const allDiceAreHeld = heldDice.length + selectedDice.length === 6;
-    if (allDiceAreHeld) {
+    const isFirstRoll = dice.every(value => value === 0);
+    
+    if (allDiceAreHeld || isFirstRoll) {
       // Generate 6 brand new dice
       const newDice = Array(6).fill(0).map(() => Math.floor(Math.random() * 6) + 1);
       setDice(newDice);
@@ -141,7 +143,7 @@ export default function Dice10000() {
       
       // Roll new values for dice that aren't held
       for (let i = 0; i < 6; i++) {
-        if (newDice[i] > 0 && !selectedDice.includes(i) && !heldDice.includes(i)) {
+        if (newDice[i] === 0 || (!selectedDice.includes(i) && !heldDice.includes(i))) {
           newDice[i] = Math.floor(Math.random() * 6) + 1;
         }
       }
@@ -312,7 +314,7 @@ export default function Dice10000() {
     // Reset game after a delay
     setTimeout(() => {
       setGameState("betting");
-      setDice([]);
+      setDice([0, 0, 0, 0, 0, 0]);
       setHeldDice([]);
       setScore(0);
       setTotalScore(0);
