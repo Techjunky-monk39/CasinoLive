@@ -76,9 +76,10 @@ const initializeDefaultUsers = async (storage: DatabaseStorage) => {
   if (!defaultUser) {
     await storage.createUser({
       username: "player123",
-      password: "password123", // Using a standard password
+      password: "password123", // Player's password
       balance: 5000
     });
+    console.log("Created default player account: player123 / password123");
   }
   
   // Create admin account
@@ -89,6 +90,14 @@ const initializeDefaultUsers = async (storage: DatabaseStorage) => {
       password: "admin123", // Admin password
       balance: 10000
     });
+    console.log("Created admin account: admin / admin123");
+  } else {
+    // Ensure the admin password is correct
+    const [updatedAdmin] = await db
+      .update(users)
+      .set({ password: "admin123" })
+      .where(eq(users.username, "admin"))
+      .returning();
   }
 };
 

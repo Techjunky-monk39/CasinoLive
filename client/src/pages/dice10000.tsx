@@ -100,8 +100,8 @@ export default function Dice10000() {
       return;
     }
     
+    // First set the game state
     setGameState("rolling");
-    setDice([0, 0, 0, 0, 0, 0]);
     setHeldDice([]);
     setScore(0);
     setTotalScore(0);
@@ -109,10 +109,10 @@ export default function Dice10000() {
     setRolls(0);
     setMinScoreRequired(1000);
     
-    // Roll dice for the first time
-    setTimeout(() => {
-      rollDice();
-    }, 100);
+    // Generate new dice directly
+    const newDice = Array(6).fill(0).map(() => Math.floor(Math.random() * 6) + 1);
+    console.log("Initial dice roll:", newDice);
+    setDice(newDice);
   };
   
   const rollDice = () => {
@@ -130,6 +130,7 @@ export default function Dice10000() {
     if (allDiceAreHeld || isFirstRoll) {
       // Generate 6 brand new dice
       const newDice = Array(6).fill(0).map(() => Math.floor(Math.random() * 6) + 1);
+      console.log("Generated new dice:", newDice);
       setDice(newDice);
       setHeldDice([]);
     } else {
@@ -148,6 +149,7 @@ export default function Dice10000() {
         }
       }
       
+      console.log("Rolling remaining dice:", newDice);
       setDice(newDice);
     }
     
@@ -291,37 +293,65 @@ export default function Dice10000() {
   };
   
   const endGame = async (isWin: boolean) => {
-    setGameState("finished");
-    
-    const winAmount = isWin ? currentBet * 2 : 0;
-    const outcome = isWin ? "win" : "loss";
-    
-    // Record game history
-    await apiRequest("POST", "/api/games/history", {
-      gameType: GameType.DICE_10000,
-      bet: currentBet,
-      outcome: outcome,
-      winAmount: winAmount
-    });
-    
+    // Handle game outcome
     if (isWin) {
+      // Player won
+      setGameState("finished");
+      
+      const winAmount = currentBet * 2;
+      const outcome = "win";
+      
+      // Record game history
+      await apiRequest("POST", "/api/games/history", {
+        gameType: GameType.DICE_10000,
+        bet: currentBet,
+        outcome: outcome,
+        winAmount: winAmount
+      });
+      
       await updateBalance(winAmount);
       showNotification(`Congratulations! You've reached 10,000 points and won ${winAmount} credits!`);
+      
+      // Reset game after a delay
+      setTimeout(() => {
+        setGameState("betting");
+        setDice([0, 0, 0, 0, 0, 0]);
+        setHeldDice([]);
+        setScore(0);
+        setTotalScore(0);
+        setSelectedDice([]);
+        setRolls(0);
+        setMinScoreRequired(1000);
+      }, 3000);
     } else {
+      // Player lost
+      setGameState("finished");
+      
+      const winAmount = 0;
+      const outcome = "loss";
+      
+      // Record game history
+      await apiRequest("POST", "/api/games/history", {
+        gameType: GameType.DICE_10000,
+        bet: currentBet,
+        outcome: outcome,
+        winAmount: winAmount
+      });
+      
       showNotification("Game over! No scoring dice left. Better luck next time.");
+      
+      // Reset game after a delay
+      setTimeout(() => {
+        setGameState("betting");
+        setDice([0, 0, 0, 0, 0, 0]);
+        setHeldDice([]);
+        setScore(0);
+        setTotalScore(0);
+        setSelectedDice([]);
+        setRolls(0);
+        setMinScoreRequired(1000);
+      }, 3000);
     }
-    
-    // Reset game after a delay
-    setTimeout(() => {
-      setGameState("betting");
-      setDice([0, 0, 0, 0, 0, 0]);
-      setHeldDice([]);
-      setScore(0);
-      setTotalScore(0);
-      setSelectedDice([]);
-      setRolls(0);
-      setMinScoreRequired(1000);
-    }, 3000);
   };
   
   // Check for Farkle when new dice are rolled
