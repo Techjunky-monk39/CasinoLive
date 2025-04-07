@@ -3,6 +3,21 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import { useNotification } from "@/components/ui/notification-banner";
 import { apiRequest } from "@/lib/queryClient";
 import { GameType } from "@shared/schema";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Type for the dice combination rank
 type DiceCombination = {
@@ -12,6 +27,10 @@ type DiceCombination = {
   isAutoLose: boolean;
   description: string;
 };
+
+// Game mode options
+type GameMode = "computer" | "passplay" | "multiplayer";
+type DifficultyMode = "unlimited" | "three-rolls" | "one-roll";
 
 export default function Dice456() {
   const { player, updateBalance } = usePlayer();
@@ -25,6 +44,14 @@ export default function Dice456() {
   const [computerCombination, setComputerCombination] = React.useState<DiceCombination | null>(null);
   const [result, setResult] = React.useState<"win" | "loss" | "push" | null>(null);
   const [rolling, setRolling] = React.useState(false);
+  const [gameMode, setGameMode] = React.useState<GameMode>("computer");
+  const [difficultyMode, setDifficultyMode] = React.useState<DifficultyMode>("unlimited");
+  const [currentPlayer, setCurrentPlayer] = React.useState<1 | 2>(1);
+  const [player1Combination, setPlayer1Combination] = React.useState<DiceCombination | null>(null);
+  const [player2Combination, setPlayer2Combination] = React.useState<DiceCombination | null>(null);
+  const [player1DiceResult, setPlayer1DiceResult] = React.useState<number[]>([]);
+  const [player2DiceResult, setPlayer2DiceResult] = React.useState<number[]>([]);
+  const [rollCount, setRollCount] = React.useState(0);
   
   const decreaseBet = () => {
     if (gameState !== "betting") return;
@@ -140,6 +167,7 @@ export default function Dice456() {
     setComputerDiceResult([]);
     setComputerCombination(null);
     setResult(null);
+    setRollCount(0); // Reset roll count for each new game
     
     // Start rolling player's dice
     rollPlayerDice();
@@ -147,6 +175,9 @@ export default function Dice456() {
   
   const rollPlayerDice = () => {
     setRolling(true);
+    
+    // Increment roll count for limited re-rolls
+    setRollCount(prev => prev + 1);
     
     // Animate dice rolling
     const rollInterval = setInterval(() => {
@@ -183,10 +214,28 @@ export default function Dice456() {
       }
       // If there's no pair (need to re-roll)
       else if (combination.name === "No pairs") {
-        showNotification("No pairs - rolling again!");
-        setTimeout(() => {
-          rollPlayerDice(); // Re-roll player's dice
-        }, 1000);
+        // Handle different re-roll modes
+        if (difficultyMode === "one-roll") {
+          // In one-roll mode, no re-rolls allowed - move to computer's turn
+          showNotification("No pairs - no re-rolls allowed in Cutthroatish mode!");
+          setTimeout(() => {
+            rollComputerDice();
+          }, 1000);
+        } 
+        else if (difficultyMode === "three-rolls" && rollCount >= 3) {
+          // In three-rolls mode, limited to 3 re-rolls
+          showNotification("No pairs - but you've used all 3 re-rolls!");
+          setTimeout(() => {
+            rollComputerDice();
+          }, 1000);
+        }
+        else {
+          // In unlimited mode or within three-roll limit
+          showNotification("No pairs - rolling again!");
+          setTimeout(() => {
+            rollPlayerDice(); // Re-roll player's dice
+          }, 1000);
+        }
       }
       // Otherwise, roll the computer's dice
       else {
@@ -233,11 +282,26 @@ export default function Dice456() {
         // Computer has 123
         endGame("win");
       } else if (combination.name === "No pairs") {
-        // Computer has no pairs - re-roll
-        showNotification("Opponent has no pairs - they roll again!");
-        setTimeout(() => {
-          rollComputerDice(); // Re-roll computer's dice
-        }, 1000);
+        // Handle different re-roll modes for computer too
+        if (difficultyMode === "one-roll") {
+          // In one-roll mode, no re-rolls allowed
+          showNotification("Opponent has no pairs - no re-rolls in Cutthroatish mode!");
+          // Computer loses due to no valid combination
+          endGame("win");
+        }
+        else if (difficultyMode === "three-rolls" && rollCount >= 3) {
+          // In three-rolls mode, limited to 3 re-rolls
+          showNotification("Opponent has no pairs - they've used all 3 re-rolls!");
+          // Computer loses due to no valid combination after 3 tries
+          endGame("win");
+        }
+        else {
+          // In unlimited mode or within roll limit
+          showNotification("Opponent has no pairs - they roll again!");
+          setTimeout(() => {
+            rollComputerDice(); // Re-roll computer's dice
+          }, 1000);
+        }
       } else if (playerCombination && combination.value > playerCombination.value) {
         // Computer has higher value
         endGame("loss");
@@ -245,7 +309,7 @@ export default function Dice456() {
         // Player has higher value
         endGame("win");
       } else {
-        // It's a tie
+        // It's a push
         endGame("push");
       }
     }, 2000);
@@ -275,7 +339,7 @@ export default function Dice456() {
       showNotification(`Congratulations! You won ${winAmount} credits!`);
     } else if (outcome === "push") {
       await updateBalance(currentBet);
-      showNotification("It's a tie! Your bet has been returned.");
+      showNotification("It's a push! Your bet has been returned.");
     } else {
       showNotification("You lost! Better luck next time.");
     }
@@ -297,11 +361,60 @@ export default function Dice456() {
             "bg-[#2E86DE]"
           }`}>
             <span className="text-lg font-bold text-white">
-              {result === "win" ? "YOU WIN!" : result === "loss" ? "YOU LOSE!" : "TIE!"}
+              {result === "win" ? "YOU WIN!" : result === "loss" ? "YOU LOSE!" : "PUSH!"}
             </span>
           </div>
         )}
       </div>
+      
+      {/* Game Settings */}
+      {gameState === "betting" && (
+        <div className="mb-6 bg-[#331D5C] rounded-xl p-4 shadow-lg">
+          <h3 className="text-xl font-montserrat font-semibold mb-3 text-[#F8BF0C]">Game Settings</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Game Mode Selection */}
+            <div>
+              <h4 className="text-[#F8BF0C] mb-2 font-semibold">Game Mode</h4>
+              <Tabs defaultValue="computer" onValueChange={(value) => setGameMode(value as GameMode)} className="w-full">
+                <TabsList className="grid grid-cols-3 mb-2">
+                  <TabsTrigger value="computer">vs Computer</TabsTrigger>
+                  <TabsTrigger value="passplay">Pass & Play</TabsTrigger>
+                  <TabsTrigger value="multiplayer">Multiplayer</TabsTrigger>
+                </TabsList>
+                <div className="text-xs text-gray-300 mt-1">
+                  {gameMode === "computer" && "Play against the computer AI"}
+                  {gameMode === "passplay" && "Play with a friend on the same device"}
+                  {gameMode === "multiplayer" && "Play with others on different devices"}
+                </div>
+              </Tabs>
+            </div>
+            
+            {/* Difficulty Selection */}
+            <div>
+              <h4 className="text-[#F8BF0C] mb-2 font-semibold">Re-roll Rules</h4>
+              <Select defaultValue="unlimited" onValueChange={(value) => setDifficultyMode(value as DifficultyMode)}>
+                <SelectTrigger className="w-full bg-[#232131] border-[#F8BF0C] text-white">
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#232131] border-[#F8BF0C] text-white">
+                  <SelectGroup>
+                    <SelectLabel>Difficulty Options</SelectLabel>
+                    <SelectItem value="unlimited">Unlimited Re-rolls</SelectItem>
+                    <SelectItem value="three-rolls">Maximum 3 Re-rolls</SelectItem>
+                    <SelectItem value="one-roll">Cutthroatish</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <div className="text-xs text-gray-300 mt-1">
+                {difficultyMode === "unlimited" && "Players can re-roll indefinitely when no pairs are rolled"}
+                {difficultyMode === "three-rolls" && "Players have a maximum of 3 re-rolls per turn"}
+                {difficultyMode === "one-roll" && "Cutthroat mode - no re-rolls allowed. Roll once and hope for the best!"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Dice Game */}
       <div className="bg-gradient-to-b from-[#331D5C] to-[#232131] rounded-xl p-6 shadow-lg">
@@ -413,7 +526,7 @@ export default function Dice456() {
                 ? "Victory!" 
                 : result === "loss" 
                   ? "Defeat!" 
-                  : "It's a tie!"}
+                  : "Push!"}
             </h3>
             <p className="text-gray-300">
               {result === "win" 
@@ -479,7 +592,7 @@ export default function Dice456() {
           <li><span className="text-[#F8BF0C] font-semibold">Doubles:</span> If you roll two of the same number, the third number is your score</li>
           <li><span className="text-[#F8BF0C] font-semibold">No Pairs:</span> If you roll three different numbers (not 123 or 456), you must roll again</li>
           <li><span className="text-[#F8BF0C] font-semibold">Highest wins:</span> The player with the higher-ranked combination wins</li>
-          <li><span className="text-[#F8BF0C] font-semibold">Winnings:</span> If you win, you get double your bet; if you tie, your bet is returned</li>
+          <li><span className="text-[#F8BF0C] font-semibold">Winnings:</span> If you win, you get double your bet; if it's a push, your bet is returned</li>
         </ul>
       </div>
     </main>
