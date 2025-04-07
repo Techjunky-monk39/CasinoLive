@@ -4,15 +4,27 @@ import { useNotification } from "@/components/ui/notification-banner";
 import { apiRequest } from "@/lib/queryClient";
 import { GameType } from "@shared/schema";
 
+// Type for the dice combination rank
+type DiceCombination = {
+  name: string;
+  value: number;
+  isAutoWin: boolean;
+  isAutoLose: boolean;
+  description: string;
+};
+
 export default function Dice456() {
   const { player, updateBalance } = usePlayer();
   const { showNotification } = useNotification();
   
   const [currentBet, setCurrentBet] = React.useState(200);
-  const [gameState, setGameState] = React.useState<"betting" | "choosing" | "result">("betting");
-  const [prediction, setPrediction] = React.useState<"odd" | "even" | null>(null);
+  const [gameState, setGameState] = React.useState<"betting" | "rolling" | "result">("betting");
   const [diceResult, setDiceResult] = React.useState<number[]>([]);
-  const [result, setResult] = React.useState<"win" | "loss" | null>(null);
+  const [playerCombination, setPlayerCombination] = React.useState<DiceCombination | null>(null);
+  const [computerDiceResult, setComputerDiceResult] = React.useState<number[]>([]);
+  const [computerCombination, setComputerCombination] = React.useState<DiceCombination | null>(null);
+  const [result, setResult] = React.useState<"win" | "loss" | "push" | null>(null);
+  const [rolling, setRolling] = React.useState(false);
   
   const decreaseBet = () => {
     if (gameState !== "betting") return;
@@ -28,6 +40,89 @@ export default function Dice456() {
     }
   };
   
+  // Function to evaluate dice combination and assign a rank
+  const evaluateDiceCombination = (dice: number[]): DiceCombination => {
+    const sortedDice = [...dice].sort((a, b) => a - b);
+    const diceString = sortedDice.join("");
+    
+    // Check for 456 (automatic win)
+    if (diceString === "456" || diceString === "465" || diceString === "546" || 
+        diceString === "564" || diceString === "645" || diceString === "654") {
+      return {
+        name: "456",
+        value: 1000,
+        isAutoWin: true,
+        isAutoLose: false,
+        description: "The highest combination - Automatic win!"
+      };
+    }
+    
+    // Check for 123 (automatic loss)
+    if (diceString === "123" || diceString === "132" || diceString === "213" || 
+        diceString === "231" || diceString === "312" || diceString === "321") {
+      return {
+        name: "123",
+        value: 0,
+        isAutoWin: false,
+        isAutoLose: true,
+        description: "The lowest combination - Automatic loss!"
+      };
+    }
+    
+    // Check for triples
+    if (sortedDice[0] === sortedDice[1] && sortedDice[1] === sortedDice[2]) {
+      const value = sortedDice[0] * 100;
+      return {
+        name: `Triple ${sortedDice[0]}s`,
+        value: value,
+        isAutoWin: false,
+        isAutoLose: false,
+        description: `Triple ${sortedDice[0]}s - Ranked by value (${value} points)`
+      };
+    }
+    
+    // Check for doubles (find the outlier)
+    if (sortedDice[0] === sortedDice[1]) {
+      return {
+        name: `Double ${sortedDice[0]}s with ${sortedDice[2]}`,
+        value: sortedDice[2],
+        isAutoWin: false,
+        isAutoLose: false,
+        description: `Doubles with outlier ${sortedDice[2]} (${sortedDice[2]} points)`
+      };
+    }
+    
+    if (sortedDice[1] === sortedDice[2]) {
+      return {
+        name: `Double ${sortedDice[1]}s with ${sortedDice[0]}`,
+        value: sortedDice[0],
+        isAutoWin: false,
+        isAutoLose: false,
+        description: `Doubles with outlier ${sortedDice[0]} (${sortedDice[0]} points)`
+      };
+    }
+    
+    if (sortedDice[0] === sortedDice[2]) {
+      return {
+        name: `Double ${sortedDice[0]}s with ${sortedDice[1]}`,
+        value: sortedDice[1],
+        isAutoWin: false,
+        isAutoLose: false,
+        description: `Doubles with outlier ${sortedDice[1]} (${sortedDice[1]} points)`
+      };
+    }
+    
+    // If no pattern is found, return the highest dice as the score
+    const highestDie = Math.max(...sortedDice);
+    return {
+      name: "No pairs",
+      value: highestDie,
+      isAutoWin: false,
+      isAutoLose: false,
+      description: `No pairs, highest die is ${highestDie} (${highestDie} points)`
+    };
+  };
+  
   const startGame = async () => {
     if (gameState !== "betting") return;
     
@@ -39,73 +134,158 @@ export default function Dice456() {
     // Deduct bet from balance
     await updateBalance(-currentBet);
     
-    // Move to choosing phase
-    setGameState("choosing");
-    setPrediction(null);
+    // Reset game state
+    setGameState("rolling");
     setDiceResult([]);
+    setPlayerCombination(null);
+    setComputerDiceResult([]);
+    setComputerCombination(null);
     setResult(null);
+    
+    // Start rolling player's dice
+    rollPlayerDice();
   };
   
-  const makePrediction = (choice: "odd" | "even") => {
-    if (gameState !== "choosing") return;
+  const rollPlayerDice = () => {
+    setRolling(true);
     
-    setPrediction(choice);
+    // Animate dice rolling
+    const rollInterval = setInterval(() => {
+      setDiceResult([
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ]);
+    }, 100);
     
-    // Roll the dice after a slight delay for suspense
+    // Stop rolling after 2 seconds
     setTimeout(() => {
-      rollDice(choice);
-    }, 1000);
+      clearInterval(rollInterval);
+      
+      // Generate final dice values
+      const finalDice = [
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ];
+      setDiceResult(finalDice);
+      
+      // Evaluate the combination
+      const combination = evaluateDiceCombination(finalDice);
+      setPlayerCombination(combination);
+      
+      // If it's an auto-lose, end the game immediately
+      if (combination.isAutoLose) {
+        endGame("loss");
+      } 
+      // If it's an auto-win, end the game immediately
+      else if (combination.isAutoWin) {
+        endGame("win");
+      }
+      // Otherwise, roll the computer's dice
+      else {
+        setTimeout(() => {
+          rollComputerDice();
+        }, 1000);
+      }
+      
+      setRolling(false);
+    }, 2000);
   };
   
-  const rollDice = async (choice: "odd" | "even") => {
-    // Roll 3 dice
-    const dice = Array(3).fill(0).map(() => Math.floor(Math.random() * 6) + 1);
-    setDiceResult(dice);
+  const rollComputerDice = () => {
+    // Animate computer dice rolling
+    const rollInterval = setInterval(() => {
+      setComputerDiceResult([
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ]);
+    }, 100);
     
-    // Calculate sum and determine if odd or even
-    const sum = dice.reduce((total, val) => total + val, 0);
-    const isEven = sum % 2 === 0;
-    const outcome = isEven ? "even" : "odd";
-    
-    // Determine win or loss
-    const playerWins = choice === outcome;
-    setResult(playerWins ? "win" : "loss");
-    
-    // Update game state
+    // Stop rolling after 2 seconds
+    setTimeout(() => {
+      clearInterval(rollInterval);
+      
+      // Generate final dice values
+      const finalDice = [
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ];
+      setComputerDiceResult(finalDice);
+      
+      // Evaluate the combination
+      const combination = evaluateDiceCombination(finalDice);
+      setComputerCombination(combination);
+      
+      // Compare the combinations to determine the winner
+      if (combination.isAutoWin) {
+        // Computer has 456
+        endGame("loss");
+      } else if (combination.isAutoLose) {
+        // Computer has 123
+        endGame("win");
+      } else if (playerCombination && combination.value > playerCombination.value) {
+        // Computer has higher value
+        endGame("loss");
+      } else if (playerCombination && combination.value < playerCombination.value) {
+        // Player has higher value
+        endGame("win");
+      } else {
+        // It's a tie
+        endGame("push");
+      }
+    }, 2000);
+  };
+  
+  const endGame = async (outcome: "win" | "loss" | "push") => {
+    setResult(outcome);
     setGameState("result");
     
-    // Handle outcome
-    const winAmount = playerWins ? currentBet * 2 : 0;
+    const winAmount = outcome === "win" ? currentBet * 2 : 
+                      outcome === "push" ? currentBet : 0;
     
     // Record game history
-    await apiRequest("POST", "/api/games/history", {
-      gameType: GameType.DICE_456,
-      bet: currentBet,
-      outcome: playerWins ? "win" : "loss",
-      winAmount: winAmount
-    });
+    try {
+      await apiRequest("POST", "/api/games/history", {
+        gameType: GameType.DICE_456,
+        bet: currentBet,
+        outcome: outcome,
+        winAmount: winAmount
+      });
+    } catch (error) {
+      console.error("Failed to record game history:", error);
+    }
     
-    if (playerWins) {
+    if (outcome === "win") {
       await updateBalance(winAmount);
-      showNotification(`Congratulations! You guessed correctly and won ${winAmount} credits!`);
+      showNotification(`Congratulations! You won ${winAmount} credits!`);
+    } else if (outcome === "push") {
+      await updateBalance(currentBet);
+      showNotification("It's a tie! Your bet has been returned.");
     } else {
-      showNotification("Wrong guess! Try again.");
+      showNotification("You lost! Better luck next time.");
     }
     
     // Reset game after a delay
     setTimeout(() => {
       setGameState("betting");
-    }, 3000);
+    }, 5000);
   };
   
   return (
     <main className="container mx-auto px-4 py-6 text-white">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-montserrat font-bold text-[#F8BF0C]">456 Dice Challenge</h2>
-        {gameState === "result" && (
-          <div className={`bg-${result === "win" ? "[#1A7A4C]" : "[#A12C2C]"} rounded-lg px-6 py-2`}>
+        {gameState === "result" && result && (
+          <div className={`rounded-lg px-6 py-2 ${
+            result === "win" ? "bg-[#1A7A4C]" : 
+            result === "loss" ? "bg-[#A12C2C]" : 
+            "bg-[#2E86DE]"
+          }`}>
             <span className="text-lg font-bold text-white">
-              {result === "win" ? "YOU WIN!" : "YOU LOSE!"}
+              {result === "win" ? "YOU WIN!" : result === "loss" ? "YOU LOSE!" : "TIE!"}
             </span>
           </div>
         )}
@@ -114,46 +294,17 @@ export default function Dice456() {
       {/* Dice Game */}
       <div className="bg-gradient-to-b from-[#331D5C] to-[#232131] rounded-xl p-6 shadow-lg">
         {/* Game area */}
-        <div className="bg-black bg-opacity-50 rounded-lg p-8 mb-6 flex flex-col items-center">
-          {gameState === "betting" && (
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-montserrat font-semibold text-[#F8BF0C] mb-4">Prepare for the Challenge</h3>
-              <p className="text-gray-300 max-w-lg mx-auto">
-                In this high-stakes game inspired by Korean survival games, 
-                you must predict whether the sum of three dice will be odd or even.
-                Choose wisely - your virtual life depends on it!
-              </p>
-            </div>
-          )}
-          
-          {gameState === "choosing" && (
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-montserrat font-semibold text-[#F8BF0C] mb-4">Make Your Prediction</h3>
-              <p className="text-gray-300 mb-4">Will the sum of the dice be odd or even?</p>
-              <div className="flex space-x-8 mt-4">
-                <button 
-                  onClick={() => makePrediction("odd")}
-                  className="bg-[#A12C2C] hover:bg-red-700 text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-300"
-                >
-                  ODD
-                </button>
-                <button 
-                  onClick={() => makePrediction("even")}
-                  className="bg-[#1A7A4C] hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-300"
-                >
-                  EVEN
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {gameState !== "betting" && (
-            <div className="flex items-center justify-center space-x-6 my-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Player Side */}
+          <div className="bg-black bg-opacity-50 rounded-lg p-6 flex flex-col items-center">
+            <h3 className="text-xl font-montserrat font-semibold text-[#F8BF0C] mb-4">Your Roll</h3>
+            
+            <div className="flex items-center justify-center space-x-4 my-4">
               {diceResult.length > 0 ? 
                 diceResult.map((value, index) => (
                   <div 
                     key={`dice-${index}`} 
-                    className="w-20 h-20 flex items-center justify-center bg-white text-[#232131] rounded-xl text-4xl font-bold shadow-lg"
+                    className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-white text-[#232131] rounded-xl text-3xl md:text-4xl font-bold shadow-lg"
                   >
                     {value}
                   </div>
@@ -161,35 +312,114 @@ export default function Dice456() {
                 Array(3).fill(0).map((_, index) => (
                   <div 
                     key={`dice-placeholder-${index}`} 
-                    className="w-20 h-20 flex items-center justify-center bg-[#331D5C] rounded-xl border-2 border-dashed border-gray-500"
+                    className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-[#331D5C] rounded-xl border-2 border-dashed border-gray-500"
                   >
                     <span className="text-gray-400">?</span>
                   </div>
                 ))
               }
             </div>
-          )}
+            
+            {playerCombination && (
+              <div className="text-center mt-2 bg-[#331D5C] bg-opacity-50 p-3 rounded-lg w-full">
+                <div className="text-lg">
+                  <span className="text-[#F8BF0C] font-bold">
+                    {playerCombination.name}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-300">
+                  {playerCombination.description}
+                </div>
+              </div>
+            )}
+          </div>
           
-          {diceResult.length > 0 && (
-            <div className="text-center mt-4">
-              <div className="text-lg">
-                Sum: <span className="text-[#F8BF0C] font-bold text-xl">
-                  {diceResult.reduce((total, val) => total + val, 0)}
-                </span>
-              </div>
-              <div className="text-lg mt-1">
-                Result: <span className="text-[#F8BF0C] font-bold">
-                  {diceResult.reduce((total, val) => total + val, 0) % 2 === 0 ? "EVEN" : "ODD"}
-                </span>
-              </div>
-              <div className="text-lg mt-1">
-                Your prediction: <span className={`font-bold ${prediction === "odd" ? "text-[#A12C2C]" : "text-[#1A7A4C]"}`}>
-                  {prediction?.toUpperCase()}
-                </span>
-              </div>
+          {/* Computer Side */}
+          <div className="bg-black bg-opacity-50 rounded-lg p-6 flex flex-col items-center">
+            <h3 className="text-xl font-montserrat font-semibold text-[#A12C2C] mb-4">Opponent's Roll</h3>
+            
+            <div className="flex items-center justify-center space-x-4 my-4">
+              {computerDiceResult.length > 0 ? 
+                computerDiceResult.map((value, index) => (
+                  <div 
+                    key={`comp-dice-${index}`} 
+                    className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-white text-[#232131] rounded-xl text-3xl md:text-4xl font-bold shadow-lg"
+                  >
+                    {value}
+                  </div>
+                )) : 
+                Array(3).fill(0).map((_, index) => (
+                  <div 
+                    key={`comp-dice-placeholder-${index}`} 
+                    className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-[#331D5C] rounded-xl border-2 border-dashed border-gray-500"
+                  >
+                    <span className="text-gray-400">?</span>
+                  </div>
+                ))
+              }
             </div>
-          )}
+            
+            {computerCombination && (
+              <div className="text-center mt-2 bg-[#331D5C] bg-opacity-50 p-3 rounded-lg w-full">
+                <div className="text-lg">
+                  <span className="text-[#A12C2C] font-bold">
+                    {computerCombination.name}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-300">
+                  {computerCombination.description}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+        
+        {/* Game message */}
+        {gameState === "betting" && (
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-montserrat font-semibold text-[#F8BF0C] mb-2">
+              Welcome to the 456 Dice Challenge
+            </h3>
+            <p className="text-gray-300 max-w-2xl mx-auto">
+              In this high-stakes game inspired by Korean survival games,
+              you'll roll three dice and compete against an opponent.
+              The combination 4-5-6 is the highest and 1-2-3 is the lowest.
+              Will luck be on your side?
+            </p>
+          </div>
+        )}
+        
+        {/* Result message */}
+        {gameState === "result" && result && (
+          <div className={`text-center mb-6 p-4 rounded-lg ${
+            result === "win" ? "bg-[#1A7A4C]" : 
+            result === "loss" ? "bg-[#A12C2C]" : 
+            "bg-[#2E86DE]"
+          } bg-opacity-20`}>
+            <h3 className="text-xl font-montserrat font-semibold text-[#F8BF0C] mb-2">
+              {result === "win" 
+                ? "Victory!" 
+                : result === "loss" 
+                  ? "Defeat!" 
+                  : "It's a tie!"}
+            </h3>
+            <p className="text-gray-300">
+              {result === "win" 
+                ? playerCombination?.isAutoWin 
+                  ? "You rolled the perfect 4-5-6 combination! Automatic win!"
+                  : computerCombination?.isAutoLose
+                    ? "Your opponent rolled the dreaded 1-2-3. Automatic win for you!"
+                    : "Your combination outranked your opponent's roll!"
+                : result === "loss"
+                  ? playerCombination?.isAutoLose
+                    ? "You rolled 1-2-3. Automatic loss!"
+                    : computerCombination?.isAutoWin
+                      ? "Your opponent rolled the perfect 4-5-6. Automatic win for them!"
+                      : "Your opponent's combination outranked your roll!"
+                  : "You and your opponent rolled combinations of equal value!"}
+            </p>
+          </div>
+        )}
         
         {/* Controls */}
         {gameState === "betting" && (
@@ -220,7 +450,7 @@ export default function Dice456() {
                 player.balance < currentBet ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              START CHALLENGE
+              ROLL THE DICE
             </button>
           </div>
         )}
@@ -229,12 +459,14 @@ export default function Dice456() {
       {/* Rules */}
       <div className="mt-6 bg-[#232131] bg-opacity-70 rounded-xl p-4">
         <h3 className="text-xl font-montserrat font-semibold mb-3 text-[#F8BF0C]">Game Rules</h3>
-        <ul className="list-disc pl-5 text-gray-300 text-sm">
-          <li>Place your bet and predict whether the sum of three dice will be odd or even</li>
-          <li>Three dice will be rolled, and their sum will determine the outcome</li>
-          <li>If your prediction is correct, you win double your bet</li>
-          <li>If your prediction is incorrect, you lose your bet</li>
-          <li>The odds are approximately 50/50, but fortune favors the bold!</li>
+        <ul className="list-disc pl-5 text-gray-300 text-sm space-y-1">
+          <li><span className="text-[#F8BF0C] font-semibold">Objective:</span> Roll a better combination than your opponent</li>
+          <li><span className="text-[#F8BF0C] font-semibold">456 is the highest:</span> Rolling 4-5-6 in any order is an automatic win</li>
+          <li><span className="text-[#F8BF0C] font-semibold">123 is the lowest:</span> Rolling 1-2-3 in any order is an automatic loss</li>
+          <li><span className="text-[#F8BF0C] font-semibold">Triples:</span> Three of the same number (666 is best, then 555, 444, 333, 222, 111)</li>
+          <li><span className="text-[#F8BF0C] font-semibold">Doubles:</span> If you roll two of the same number, the third number is your score</li>
+          <li><span className="text-[#F8BF0C] font-semibold">Highest wins:</span> The player with the higher-ranked combination wins</li>
+          <li><span className="text-[#F8BF0C] font-semibold">Winnings:</span> If you win, you get double your bet; if you tie, your bet is returned</li>
         </ul>
       </div>
     </main>
