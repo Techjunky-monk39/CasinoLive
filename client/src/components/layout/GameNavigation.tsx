@@ -13,58 +13,58 @@ export default function GameNavigation() {
         <ul className="flex overflow-x-auto space-x-1 sm:space-x-4 py-2 no-scrollbar">
           <li>
             <Link href="/">
-              <a className={`${isActive("/")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white`}>
+              <div className={`${isActive("/")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white cursor-pointer`}>
                 <i className="fas fa-home mr-2"></i>
                 <span className="whitespace-nowrap">Lobby</span>
-              </a>
+              </div>
             </Link>
           </li>
           <li>
             <Link href="/slots">
-              <a className={`${isActive("/slots")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white`}>
+              <div className={`${isActive("/slots")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white cursor-pointer`}>
                 <i className="fas fa-dice mr-2"></i>
                 <span className="whitespace-nowrap">Slots</span>
-              </a>
+              </div>
             </Link>
           </li>
           <li>
             <Link href="/poker">
-              <a className={`${isActive("/poker")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white`}>
+              <div className={`${isActive("/poker")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white cursor-pointer`}>
                 <i className="fas fa-crown mr-2"></i>
                 <span className="whitespace-nowrap">Poker</span>
-              </a>
+              </div>
             </Link>
           </li>
           <li>
             <Link href="/blackjack">
-              <a className={`${isActive("/blackjack")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white`}>
+              <div className={`${isActive("/blackjack")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white cursor-pointer`}>
                 <i className="fas fa-spade mr-2"></i>
                 <span className="whitespace-nowrap">Blackjack</span>
-              </a>
+              </div>
             </Link>
           </li>
           <li>
             <Link href="/dice10000">
-              <a className={`${isActive("/dice10000")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white`}>
+              <div className={`${isActive("/dice10000")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white cursor-pointer`}>
                 <i className="fas fa-dice-six mr-2"></i>
                 <span className="whitespace-nowrap">10000 Dice</span>
-              </a>
+              </div>
             </Link>
           </li>
           <li>
             <Link href="/dice456">
-              <a className={`${isActive("/dice456")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white`}>
+              <div className={`${isActive("/dice456")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white cursor-pointer`}>
                 <i className="fas fa-dice-three mr-2"></i>
                 <span className="whitespace-nowrap">456 Game</span>
-              </a>
+              </div>
             </Link>
           </li>
           <li>
             <Link href="/craps">
-              <a className={`${isActive("/craps")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white`}>
+              <div className={`${isActive("/craps")} rounded-lg px-4 py-2 font-montserrat font-semibold flex items-center text-white cursor-pointer`}>
                 <i className="fas fa-dice-d20 mr-2"></i>
                 <span className="whitespace-nowrap">Craps</span>
-              </a>
+              </div>
             </Link>
           </li>
         </ul>

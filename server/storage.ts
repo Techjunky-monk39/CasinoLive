@@ -75,7 +75,7 @@ const initializeDefaultUser = async (storage: DatabaseStorage) => {
   if (!defaultUser) {
     await storage.createUser({
       username: "player123",
-      password: "password123",
+      password: "$admin", // Updated to user's suggested password
       balance: 5000
     });
   }
