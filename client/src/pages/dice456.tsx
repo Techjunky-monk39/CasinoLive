@@ -328,8 +328,19 @@ export default function Dice456() {
         // Player has higher value
         endGame("win");
       } else {
-        // It's a push
-        endGame("push");
+        // It's a tie - both players should roll again
+        showNotification("It's a tie! Both players will roll again.");
+        setTimeout(() => {
+          // Clear current dice results
+          setDiceResult([]);
+          setComputerDiceResult([]);
+          setPlayerCombination(null);
+          setComputerCombination(null);
+          
+          // Start new round with player 1 rolling first
+          setGameState("rolling");
+          rollPlayerDice();
+        }, 1500);
       }
     }, 2000);
   };
@@ -396,8 +407,19 @@ export default function Dice456() {
         // Player 1 has higher value
         endGame("win");
       } else {
-        // It's a push
-        endGame("push");
+        // It's a tie - both players should roll again
+        showNotification("It's a tie! Both players will roll again.");
+        setTimeout(() => {
+          // Clear current dice results
+          setDiceResult([]);
+          setComputerDiceResult([]);
+          setPlayerCombination(null);
+          setComputerCombination(null);
+          
+          // Start new round with player 1 rolling first
+          setGameState("rolling");
+          rollPlayerDice();
+        }, 1500);
       }
       
       setRolling(false);
@@ -408,6 +430,8 @@ export default function Dice456() {
     setResult(outcome);
     setGameState("result");
     
+    // With the new tie handling rules, we shouldn't have "push" outcomes anymore
+    // but keeping this code intact in case other game logic still references it
     const winAmount = outcome === "win" ? currentBet * 2 : 
                       outcome === "push" ? currentBet : 0;
     
@@ -777,7 +801,8 @@ export default function Dice456() {
           <li><span className="text-[#F8BF0C] font-semibold">Doubles:</span> If you roll two of the same number, the third number is your score</li>
           <li><span className="text-[#F8BF0C] font-semibold">No Pairs:</span> If you roll three different numbers (not 123 or 456), you must roll again</li>
           <li><span className="text-[#F8BF0C] font-semibold">Highest wins:</span> The player with the higher-ranked combination wins</li>
-          <li><span className="text-[#F8BF0C] font-semibold">Winnings:</span> If you win, you get double your bet; if it's a push, your bet is returned</li>
+          <li><span className="text-[#F8BF0C] font-semibold">Ties:</span> If both players have the same combination value, both will roll again</li>
+          <li><span className="text-[#F8BF0C] font-semibold">Winnings:</span> If you win, you get double your bet</li>
         </ul>
       </div>
     </main>
