@@ -4,6 +4,19 @@ import { useNotification } from "@/components/ui/notification-banner";
 import { apiRequest } from "@/lib/queryClient";
 import { GameType } from "@shared/schema";
 
+// Helper function to convert dice values to Unicode dice characters
+const getDiceCharacter = (value: number): string => {
+  switch (value) {
+    case 1: return "⚀";
+    case 2: return "⚁";
+    case 3: return "⚂";
+    case 4: return "⚃";
+    case 5: return "⚄";
+    case 6: return "⚅";
+    default: return "🎲";
+  }
+};
+
 export default function Dice10000() {
   const { player, updateBalance } = usePlayer();
   const { showNotification } = useNotification();
@@ -102,6 +115,8 @@ export default function Dice10000() {
     }
   };
   
+  // NOTE: getDiceCharacter is defined at the top of the file
+
   const calculateScore = (selectedDiceValues: number[]): number => {
     let score = 0;
     
@@ -313,7 +328,7 @@ export default function Dice10000() {
                   >
                     {value > 0 ? (
                       <div className="text-3xl font-bold text-white">
-                        {value}
+                        {getDiceCharacter(value)}
                       </div>
                     ) : (
                       <div className="text-sm text-gray-500">Used</div>
