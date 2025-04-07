@@ -17,6 +17,7 @@
   .shadow-glow {
     box-shadow: 0 0 10px rgba(248, 191, 12, 0.7), 
                 0 0 20px rgba(248, 191, 12, 0.5);
+    animation: pulse 2s infinite;
   }
   
   .text-stroke {
@@ -34,5 +35,26 @@
       radial-gradient(circle at center, rgba(51, 29, 92, 0.8) 0%, rgba(35, 33, 49, 0.7) 80%),
       linear-gradient(45deg, rgba(161, 44, 44, 0.2) 0%, rgba(248, 191, 12, 0.2) 100%);
     background-size: 10px 10px, 100% 100%;
+  }
+  
+  .btn-click {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 10px rgba(248, 191, 12, 0.7), 
+                0 0 20px rgba(248, 191, 12, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(248, 191, 12, 0.8), 
+                0 0 25px rgba(248, 191, 12, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(248, 191, 12, 0.7), 
+                0 0 20px rgba(248, 191, 12, 0.5);
   }
 }

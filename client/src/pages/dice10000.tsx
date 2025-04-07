@@ -285,22 +285,42 @@ export default function Dice10000() {
             <div className="flex items-center bg-black bg-opacity-50 rounded-lg overflow-hidden mb-8">
               <span className="text-xl text-[#F8BF0C] font-bold px-4">BET:</span>
               <button 
-                onClick={decreaseBet}
-                className="bg-[#331D5C] hover:bg-purple-800 text-white px-5 py-4 focus:outline-none disabled:opacity-50 font-bold text-xl"
+                onClick={(e) => {
+                  decreaseBet();
+                  (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
+                  setTimeout(() => {
+                    (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
+                  }, 100);
+                }}
+                className="bg-[#331D5C] hover:bg-purple-800 text-white px-5 py-4 focus:outline-none disabled:opacity-50 font-bold text-xl transition-transform"
               >
                 -
               </button>
               <span className="px-8 py-4 font-sans text-[#F8BF0C] text-2xl font-bold">{currentBet}</span>
               <button 
-                onClick={increaseBet}
-                className="bg-[#331D5C] hover:bg-purple-800 text-white px-5 py-4 focus:outline-none disabled:opacity-50 font-bold text-xl"
+                onClick={(e) => {
+                  increaseBet();
+                  (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
+                  setTimeout(() => {
+                    (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
+                  }, 100);
+                }}
+                className="bg-[#331D5C] hover:bg-purple-800 text-white px-5 py-4 focus:outline-none disabled:opacity-50 font-bold text-xl transition-transform"
               >
                 +
               </button>
             </div>
             
             <button 
-              onClick={startGame}
+              onClick={(e) => {
+                startGame();
+                if (player.balance >= currentBet) {
+                  (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
+                  setTimeout(() => {
+                    (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
+                  }, 100);
+                }
+              }}
               disabled={player.balance < currentBet}
               className={`bg-gradient-to-r from-[#A12C2C] to-[#F8BF0C] hover:from-red-700 hover:to-yellow-500 text-white font-sans py-4 px-12 rounded-lg text-xl shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none ${
                 player.balance < currentBet ? "opacity-50 cursor-not-allowed" : ""
@@ -366,14 +386,30 @@ export default function Dice10000() {
             {/* Controls */}
             <div className="flex justify-center space-x-6">
               <button 
-                onClick={rollDice}
+                onClick={(e) => {
+                  rollDice();
+                  if (gameState === "rolling") {
+                    (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
+                    setTimeout(() => {
+                      (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
+                    }, 100);
+                  }
+                }}
                 disabled={gameState !== "rolling"}
                 className="bg-gradient-to-r from-[#2E86DE] to-[#1A7A4C] hover:from-blue-700 hover:to-green-700 text-white font-sans py-3 px-8 rounded-lg text-lg shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none disabled:opacity-50"
               >
                 ROLL AGAIN
               </button>
               <button 
-                onClick={bankScore}
+                onClick={(e) => {
+                  bankScore();
+                  if (gameState === "rolling" && selectedDice.length > 0) {
+                    (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
+                    setTimeout(() => {
+                      (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
+                    }, 100);
+                  }
+                }}
                 disabled={gameState !== "rolling" || selectedDice.length === 0}
                 className="bg-gradient-to-r from-[#F8BF0C] to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-[#232131] font-bold font-sans py-3 px-8 rounded-lg text-lg shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none disabled:opacity-50"
               >
