@@ -6,6 +6,8 @@ import {
   type GameHistory, 
   type InsertGameHistory 
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -16,40 +18,25 @@ export interface IStorage {
   addGameHistory(history: InsertGameHistory): Promise<GameHistory>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private history: Map<number, GameHistory>;
-  private currentUserId: number;
-  private currentHistoryId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.history = new Map();
-    this.currentUserId = 1;
-    this.currentHistoryId = 1;
-    
-    // Create a default user for demo purposes
-    this.createUser({
-      username: "player123",
-      password: "password123",
-      balance: 5000
-    });
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username.toLowerCase() === username.toLowerCase(),
-    );
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
@@ -57,27 +44,45 @@ export class MemStorage implements IStorage {
     const user = await this.getUser(id);
     if (!user) return undefined;
     
-    const updatedUser = {
-      ...user,
-      balance: user.balance + amount
-    };
+    const [updatedUser] = await db
+      .update(users)
+      .set({ balance: user.balance + amount })
+      .where(eq(users.id, id))
+      .returning();
     
-    this.users.set(id, updatedUser);
     return updatedUser;
   }
 
   async getGameHistory(userId: number): Promise<GameHistory[]> {
-    return Array.from(this.history.values()).filter(
-      (history) => history.userId === userId,
-    );
+    return await db
+      .select()
+      .from(gameHistory)
+      .where(eq(gameHistory.userId, userId));
   }
 
   async addGameHistory(insertHistory: InsertGameHistory): Promise<GameHistory> {
-    const id = this.currentHistoryId++;
-    const history: GameHistory = { ...insertHistory, id };
-    this.history.set(id, history);
+    const [history] = await db
+      .insert(gameHistory)
+      .values(insertHistory)
+      .returning();
     return history;
   }
 }
 
-export const storage = new MemStorage();
+// Create a default user for demo purposes if it doesn't exist
+const initializeDefaultUser = async (storage: DatabaseStorage) => {
+  const defaultUser = await storage.getUserByUsername("player123");
+  if (!defaultUser) {
+    await storage.createUser({
+      username: "player123",
+      password: "password123",
+      balance: 5000
+    });
+  }
+};
+
+// Use database storage
+export const storage = new DatabaseStorage();
+
+// Initialize default user
+initializeDefaultUser(storage).catch(console.error);

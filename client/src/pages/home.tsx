@@ -35,13 +35,46 @@ const FEATURED_GAMES: GameInfo[] = [
       text: "Hot",
       color: "[#F8BF0C]"
     }
+  },
+  {
+    id: "dice10000",
+    name: "10000 Dice Game",
+    description: "A strategic dice game where you aim to reach 10,000 points through strategic rolling and scoring.",
+    imageSrc: "https://images.unsplash.com/photo-1595929287357-5c50761fe96d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80",
+    players: 127,
+    tag: {
+      text: "New",
+      color: "[#2E86DE]"
+    }
+  },
+  {
+    id: "dice456",
+    name: "456 Dice Challenge",
+    description: "High-stakes dice game inspired by Korean survival games. Predict odds or evens to win big!",
+    imageSrc: "https://images.unsplash.com/photo-1541847937110-c91ef9af6aaf?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80",
+    players: 86,
+    tag: {
+      text: "Trending",
+      color: "[#A12C2C]"
+    }
+  },
+  {
+    id: "craps",
+    name: "Street Craps",
+    description: "Classic casino dice game where players bet on the outcome of dice rolls. Multiple betting options!",
+    imageSrc: "https://images.unsplash.com/photo-1593815617768-bef4e7ae7139?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80",
+    players: 153,
+    tag: {
+      text: "Classic",
+      color: "[#1A7A4C]"
+    }
   }
 ];
 
 export default function Home() {
   return (
     <main className="container mx-auto px-4 py-6 text-white">
-      <h2 className="text-3xl font-montserrat font-bold mb-6 text-[#F8BF0C]">Welcome to Royal Flush Casino</h2>
+      <h2 className="text-3xl font-montserrat font-bold mb-6 text-[#F8BF0C]">Welcome to CasinoLive</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {FEATURED_GAMES.map((game) => (

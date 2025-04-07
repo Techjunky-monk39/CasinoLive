@@ -44,6 +44,9 @@ export enum GameType {
   SLOTS = "slots",
   POKER = "poker",
   BLACKJACK = "blackjack",
+  DICE_10000 = "dice10000",
+  DICE_456 = "dice456",
+  CRAPS = "craps",
 }
 
 export type GameOutcome = "win" | "loss" | "push";
