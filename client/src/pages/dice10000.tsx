@@ -337,18 +337,18 @@ export default function Dice10000() {
                 {dice.map((value, index) => (
                   <div 
                     key={`dice-${index}`} 
-                    className={`w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-lg cursor-pointer border-2 transition-all transform ${
+                    className={`w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-xl cursor-pointer transition-all transform ${
                       selectedDice.includes(index) 
-                        ? 'border-[#F8BF0C] bg-[#331D5C] scale-110 shadow-glow' 
+                        ? 'bg-white text-[#232131] scale-110 shadow-[0_0_15px_rgba(248,191,12,0.7)]' 
                         : value === 0 
-                          ? 'border-gray-700 bg-gray-800 opacity-30 cursor-not-allowed' 
-                          : 'border-gray-700 bg-[#232131] hover:border-[#F8BF0C] hover:scale-105'
+                          ? 'bg-gray-800 opacity-30 cursor-not-allowed' 
+                          : 'bg-[#331D5C] hover:bg-purple-800 hover:scale-105 text-white'
                     }`}
                     onClick={() => value > 0 && toggleDiceSelection(index)}
                   >
                     {value > 0 ? (
-                      <div className="text-3xl font-bold text-white">
-                        {getDiceCharacter(value)}
+                      <div className="text-3xl md:text-4xl font-bold">
+                        {value}
                       </div>
                     ) : (
                       <div className="text-sm text-gray-500">Used</div>
