@@ -38,7 +38,7 @@ export default function Dice456() {
   const { showNotification } = useNotification();
   
   const [currentBet, setCurrentBet] = React.useState(200);
-  const [gameState, setGameState] = React.useState<"betting" | "rolling" | "result">("betting");
+  const [gameState, setGameState] = React.useState<"betting" | "rolling" | "waitingForPlayer2" | "waitingForPlayer2Reroll" | "result">("betting");
   const [diceResult, setDiceResult] = React.useState<number[]>([]);
   const [playerCombination, setPlayerCombination] = React.useState<DiceCombination | null>(null);
   const [computerDiceResult, setComputerDiceResult] = React.useState<number[]>([]);
@@ -249,7 +249,16 @@ export default function Dice456() {
     }, 2000);
   };
   
+  // Separate function for computer mode and pass-and-play mode for player 2
   const rollComputerDice = () => {
+    // For pass and play mode, don't auto roll - wait for player 2 to press button
+    if (gameMode === "passplay") {
+      setGameState("waitingForPlayer2");
+      showNotification("Pass the device to Player 2 for their turn");
+      return;
+    }
+    
+    // Regular computer AI opponent mode
     // Animate computer dice rolling
     const rollInterval = setInterval(() => {
       setComputerDiceResult([
@@ -313,6 +322,76 @@ export default function Dice456() {
         // It's a push
         endGame("push");
       }
+    }, 2000);
+  };
+  
+  // Special function for player 2 in pass-and-play mode
+  const rollPlayer2Dice = () => {
+    setRolling(true);
+    
+    // Animate dice rolling
+    const rollInterval = setInterval(() => {
+      setComputerDiceResult([
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ]);
+    }, 100);
+    
+    // Stop rolling after 2 seconds
+    setTimeout(() => {
+      clearInterval(rollInterval);
+      
+      // Generate final dice values
+      const finalDice = [
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ];
+      setComputerDiceResult(finalDice);
+      
+      // Evaluate the combination
+      const combination = evaluateDiceCombination(finalDice);
+      setComputerCombination(combination);
+      
+      // Compare the combinations to determine the winner
+      if (combination.isAutoWin) {
+        // Player 2 has 456
+        endGame("loss");
+      } else if (combination.isAutoLose) {
+        // Player 2 has 123
+        endGame("win");
+      } else if (combination.name === "No pairs") {
+        // Handle different re-roll modes
+        if (difficultyMode === "one-roll") {
+          // In one-roll mode, no re-rolls allowed
+          showNotification("Player 2 has no pairs - no re-rolls in Cutthroatish mode!");
+          // Player 2 loses due to no valid combination
+          endGame("win");
+        }
+        else if (difficultyMode === "three-rolls" && rollCount >= 3) {
+          // In three-rolls mode, limited to 3 re-rolls
+          showNotification("Player 2 has no pairs - they've used all 3 re-rolls!");
+          // Player 2 loses due to no valid combination after 3 tries
+          endGame("win");
+        }
+        else {
+          // In unlimited mode or within roll limit
+          showNotification("Player 2 has no pairs - they need to roll again!");
+          setGameState("waitingForPlayer2Reroll");
+        }
+      } else if (playerCombination && combination.value > playerCombination.value) {
+        // Player 2 has higher value
+        endGame("loss");
+      } else if (playerCombination && combination.value < playerCombination.value) {
+        // Player 1 has higher value
+        endGame("win");
+      } else {
+        // It's a push
+        endGame("push");
+      }
+      
+      setRolling(false);
     }, 2000);
   };
   
@@ -590,8 +669,44 @@ export default function Dice456() {
           </div>
         )}
         
+        {/* Player 2 Turn Button - Only shown in Pass & Play Mode */}
+        {gameState === "waitingForPlayer2" && (
+          <div className="text-center mb-6 p-8 rounded-lg bg-gradient-to-r from-[#A12C2C] to-purple-900 border-2 border-[#F8BF0C]">
+            <h3 className="text-2xl font-montserrat font-bold text-[#F8BF0C] mb-4">
+              Player 2's Turn
+            </h3>
+            <p className="text-gray-200 mb-6">
+              Player 1 has rolled their dice. Now it's Player 2's turn to roll!
+            </p>
+            <button 
+              onClick={rollPlayer2Dice}
+              className="bg-gradient-to-r from-[#F8BF0C] to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black font-bold py-4 px-12 rounded-lg text-xl shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              PLAYER 2 - ROLL THE DICE
+            </button>
+          </div>
+        )}
+        
+        {/* Player 2 Re-roll Button - Only shown when Player 2 needs to re-roll */}
+        {gameState === "waitingForPlayer2Reroll" && (
+          <div className="text-center mb-6 p-8 rounded-lg bg-gradient-to-r from-[#A12C2C] to-purple-900 border-2 border-[#F8BF0C]">
+            <h3 className="text-2xl font-montserrat font-bold text-[#F8BF0C] mb-4">
+              Player 2 - No Pairs!
+            </h3>
+            <p className="text-gray-200 mb-6">
+              You rolled no pairs, which means you need to roll again.
+            </p>
+            <button 
+              onClick={rollPlayer2Dice}
+              className="bg-gradient-to-r from-[#F8BF0C] to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black font-bold py-4 px-12 rounded-lg text-xl shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              PLAYER 2 - ROLL AGAIN
+            </button>
+          </div>
+        )}
+        
         {/* Game Stats */}
-        {gameState === "rolling" && (
+        {(gameState === "rolling" || gameState === "waitingForPlayer2" || gameState === "waitingForPlayer2Reroll") && (
           <div className="text-center mb-6 p-4 rounded-lg bg-black bg-opacity-30">
             <div className="text-md text-gray-300">
               <span className="text-[#F8BF0C] font-bold mr-2">Current Bet:</span>
@@ -600,6 +715,12 @@ export default function Dice456() {
               {difficultyMode === "three-rolls" && (
                 <span className="ml-6 text-[#F8BF0C] font-bold mr-2">
                   Re-rolls: <span className="text-white">{rollCount}/3</span>
+                </span>
+              )}
+              
+              {gameMode === "passplay" && (
+                <span className="ml-6 text-[#F8BF0C] font-bold mr-2">
+                  Mode: <span className="text-white">Pass & Play</span>
                 </span>
               )}
             </div>
