@@ -394,10 +394,9 @@ export default function Dice10000() {
               <button 
                 onClick={(e) => {
                   decreaseBet();
-                  const btn = e.currentTarget as HTMLButtonElement;
-                  btn.classList.add('btn-click');
+                  (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
                   setTimeout(() => {
-                    btn.classList.remove('btn-click');
+                    (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
                   }, 100);
                 }}
                 className="bg-[#331D5C] hover:bg-purple-800 text-white px-5 py-4 focus:outline-none disabled:opacity-50 font-bold text-xl transition-transform"
@@ -408,10 +407,9 @@ export default function Dice10000() {
               <button 
                 onClick={(e) => {
                   increaseBet();
-                  const btn = e.currentTarget as HTMLButtonElement;
-                  btn.classList.add('btn-click');
+                  (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
                   setTimeout(() => {
-                    btn.classList.remove('btn-click');
+                    (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
                   }, 100);
                 }}
                 className="bg-[#331D5C] hover:bg-purple-800 text-white px-5 py-4 focus:outline-none disabled:opacity-50 font-bold text-xl transition-transform"
@@ -423,10 +421,9 @@ export default function Dice10000() {
             <button 
               onClick={(e) => {
                 startGame();
-                const btn = e.currentTarget as HTMLButtonElement;
-                btn.classList.add('btn-click');
+                (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
                 setTimeout(() => {
-                  btn.classList.remove('btn-click');
+                  (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
                 }, 100);
               }}
               disabled={player.balance < currentBet}
@@ -541,10 +538,9 @@ export default function Dice10000() {
                   
                   rollDice();
                   if (gameState === "rolling") {
-                    const btn = e.currentTarget as HTMLButtonElement;
-                    btn.classList.add('btn-click');
+                    (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
                     setTimeout(() => {
-                      btn.classList.remove('btn-click');
+                      (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
                     }, 100);
                   }
                 }}
@@ -557,10 +553,9 @@ export default function Dice10000() {
                 onClick={(e) => {
                   bankScore();
                   if (gameState === "rolling" && canBankScore) {
-                    const btn = e.currentTarget as HTMLButtonElement;
-                    btn.classList.add('btn-click');
+                    (e.currentTarget as HTMLButtonElement).classList.add('btn-click');
                     setTimeout(() => {
-                      btn.classList.remove('btn-click');
+                      (e.currentTarget as HTMLButtonElement).classList.remove('btn-click');
                     }, 100);
                   }
                 }}
