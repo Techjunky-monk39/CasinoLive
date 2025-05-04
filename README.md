@@ -28,7 +28,7 @@ CasinoLive is a social casino game designed to provide an authentic casino exper
    git clone https://github.com/techjunky-monk39/CasinoLive.git
    cd CasinoLive
    ```
-
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Techjunky-monk39/CasinoLiveTJ39)
 ## Usage
 
 Describe how to use the project. Include code examples if necessary.
